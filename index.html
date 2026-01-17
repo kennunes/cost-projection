@@ -1,0 +1,293 @@
+import React, { useState, useMemo } from 'react';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
+  ResponsiveContainer, LineChart, Line, Legend, ComposedChart 
+} from 'recharts';
+import { 
+  Zap, TrendingUp, Lock, Calculator, Calendar, 
+  ArrowRightLeft, AlertCircle, Info, ChevronRight
+} from 'lucide-react';
+
+const App = () => {
+  // Mock data representing imported costs from previous modules
+  const initialBaseCost = 1887701.34; 
+  
+  // State for Scenario A (Primary)
+  const [annualIncreaseA, setAnnualIncreaseA] = useState(7.5);
+  // State for Scenario B (Comparison)
+  const [annualIncreaseB, setAnnualIncreaseB] = useState(10.5);
+  const [isComparisonMode, setIsComparisonMode] = useState(false);
+  const [startYear] = useState(2026);
+
+  // Calculation engine for both scenarios
+  const projectionData = useMemo(() => {
+    let data = [];
+    let accumulationA = 0;
+    let accumulationB = 0;
+    let currentCostA = initialBaseCost;
+    let currentCostB = initialBaseCost;
+
+    for (let i = 0; i < 10; i++) {
+      const year = startYear + i;
+      
+      // Scenario A Logic
+      const incA = currentCostA * (annualIncreaseA / 100);
+      const endA = currentCostA + incA;
+      accumulationA += endA;
+
+      // Scenario B Logic
+      const incB = currentCostB * (annualIncreaseB / 100);
+      const endB = currentCostB + incB;
+      accumulationB += endB;
+
+      data.push({
+        year,
+        scenarioA: Math.round(endA),
+        scenarioB: Math.round(endB),
+        accA: Math.round(accumulationA),
+        accB: Math.round(accumulationB),
+        delta: Math.round(accumulationB - accumulationA)
+      });
+
+      currentCostA = endA;
+      currentCostB = endB;
+    }
+    return data;
+  }, [annualIncreaseA, annualIncreaseB, startYear]);
+
+  const finalDelta = projectionData[9].delta;
+
+  return (
+    <div className="min-h-screen bg-[#0a0e12] text-slate-200 p-4 md:p-8 font-sans">
+      {/* Header Section */}
+      <div className="max-w-7xl mx-auto">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-yellow-500/10 rounded-lg">
+                <Zap className="text-yellow-500 w-6 h-6" />
+              </div>
+              <h1 className="text-2xl font-bold tracking-tight">Cost Projection Analysis</h1>
+            </div>
+            <p className="text-slate-400 text-sm max-w-md">
+              Forecast cumulative utility liabilities over a 10-year horizon based on imported 2025 actuals.
+            </p>
+          </div>
+
+          <div className="flex gap-4">
+             {/* Dynamic Total Card */}
+             <div className="bg-[#151b23] border border-slate-800 p-4 rounded-xl shadow-xl min-w-[200px]">
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-1">
+                Projected 10yr Total (A)
+              </span>
+              <div className="text-2xl font-mono font-bold text-yellow-500">
+                R {(projectionData[9].accA / 1000000).toFixed(2)}M
+              </div>
+            </div>
+
+            {isComparisonMode && (
+              <div className="bg-[#151b23] border border-cyan-900/30 p-4 rounded-xl shadow-xl min-w-[200px] animate-in fade-in slide-in-from-right-4 duration-500">
+                <span className="text-[10px] text-cyan-500 font-bold uppercase tracking-widest block mb-1">
+                  Liability Variance (B-A)
+                </span>
+                <div className="text-2xl font-mono font-bold text-cyan-400">
+                  + R {(finalDelta / 1000000).toFixed(2)}M
+                </div>
+              </div>
+            )}
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+          {/* Sidebar Controls */}
+          <div className="lg:col-span-1 space-y-6">
+            <div className="bg-[#151b23] border border-slate-800 rounded-2xl overflow-hidden">
+              <div className="p-5 border-b border-slate-800 bg-slate-800/20">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-300">
+                  <Calculator size={16} className="text-blue-400" /> Control Panel
+                </h3>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                {/* Base Data (Read Only) */}
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">2025 Base Cost (Imported)</label>
+                  <div className="flex items-center justify-between bg-[#0d1117] p-3 rounded-lg border border-slate-800">
+                    <span className="text-sm font-mono">R {initialBaseCost.toLocaleString()}</span>
+                    <Lock size={12} className="text-slate-600" />
+                  </div>
+                </div>
+
+                {/* Scenario A */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-bold text-yellow-500 uppercase">Scenario A Increase</label>
+                    <span className="text-xs font-bold bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded">{annualIncreaseA}%</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="25" step="0.1"
+                    value={annualIncreaseA}
+                    onChange={(e) => setAnnualIncreaseA(parseFloat(e.target.value))}
+                    className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                  />
+                </div>
+
+                {/* Scenario Toggle */}
+                <div className="pt-4 border-t border-slate-800">
+                  <button 
+                    onClick={() => setIsComparisonMode(!isComparisonMode)}
+                    className={`w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-bold transition-all ${
+                      isComparisonMode 
+                      ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' 
+                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                    }`}
+                  >
+                    <ArrowRightLeft size={14} />
+                    {isComparisonMode ? 'Disable Comparison' : 'Enable Comparison'}
+                  </button>
+                </div>
+
+                {/* Scenario B (Conditional) */}
+                {isComparisonMode && (
+                  <div className="space-y-3 pt-4 animate-in slide-in-from-top-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[10px] font-bold text-cyan-400 uppercase">Scenario B Increase</label>
+                      <span className="text-xs font-bold bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded">{annualIncreaseB}%</span>
+                    </div>
+                    <input 
+                      type="range" min="0" max="25" step="0.1"
+                      value={annualIncreaseB}
+                      onChange={(e) => setAnnualIncreaseB(parseFloat(e.target.value))}
+                      className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-blue-500/5 border border-blue-500/10 p-4 rounded-2xl flex gap-3">
+              <Info size={16} className="text-blue-400 shrink-0" />
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Calculations are compounded annually. Total liability represents the sum of all projected payments from {startYear} to {startYear + 9}.
+              </p>
+            </div>
+          </div>
+
+          {/* Main Chart Area */}
+          <div className="lg:col-span-3 space-y-6">
+            <div className="bg-[#151b23] border border-slate-800 p-6 rounded-2xl shadow-sm">
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <TrendingUp size={16} className="text-green-500" /> 
+                  10-Year Annual Cost Growth
+                </h3>
+                <div className="flex gap-4 text-[10px] font-bold uppercase tracking-widest">
+                  <div className="flex items-center gap-1.5 text-yellow-500">
+                    <div className="w-2 h-2 rounded-full bg-yellow-500" /> Scenario A
+                  </div>
+                  {isComparisonMode && (
+                    <div className="flex items-center gap-1.5 text-cyan-400">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400" /> Scenario B
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="h-[350px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={projectionData}>
+                    <defs>
+                      <linearGradient id="gradA" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#eab308" stopOpacity={0.1}/>
+                        <stop offset="95%" stopColor="#eab308" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="gradB" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.1}/>
+                        <stop offset="95%" stopColor="#22d3ee" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                    <XAxis 
+                      dataKey="year" 
+                      stroke="#475569" 
+                      fontSize={11} 
+                      tickLine={false} 
+                      axisLine={false}
+                      dy={10}
+                    />
+                    <YAxis 
+                      stroke="#475569" 
+                      fontSize={11} 
+                      tickLine={false} 
+                      axisLine={false}
+                      tickFormatter={(val) => `R${(val/1000).toFixed(0)}k`}
+                    />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#0d1117', border: '1px solid #1e293b', borderRadius: '8px' }}
+                      itemStyle={{ fontSize: '12px' }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="scenarioA" 
+                      stroke="#eab308" 
+                      strokeWidth={3}
+                      fillOpacity={1} 
+                      fill="url(#gradA)" 
+                    />
+                    {isComparisonMode && (
+                      <Area 
+                        type="monotone" 
+                        dataKey="scenarioB" 
+                        stroke="#22d3ee" 
+                        strokeWidth={3}
+                        fillOpacity={1} 
+                        fill="url(#gradB)" 
+                      />
+                    )}
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Comparison Table */}
+            <div className="bg-[#151b23] border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-800/30 text-slate-500 border-b border-slate-800">
+                    <th className="p-4 font-bold uppercase tracking-wider">Projected Year</th>
+                    <th className="p-4 font-bold uppercase tracking-wider">Scenario A (Annual)</th>
+                    {isComparisonMode && <th className="p-4 font-bold uppercase tracking-wider text-cyan-400">Scenario B (Annual)</th>}
+                    <th className="p-4 font-bold uppercase tracking-wider text-right">Accumulated (A)</th>
+                    {isComparisonMode && <th className="p-4 font-bold uppercase tracking-wider text-right text-cyan-400">Var (B-A)</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {projectionData.map((row) => (
+                    <tr key={row.year} className="hover:bg-slate-800/20 transition-colors group">
+                      <td className="p-4 font-bold text-slate-300">
+                        <div className="flex items-center gap-2">
+                           <ChevronRight size={12} className="text-slate-600 group-hover:text-yellow-500 transition-colors" />
+                           {row.year}
+                        </div>
+                      </td>
+                      <td className="p-4 font-mono">R {row.scenarioA.toLocaleString()}</td>
+                      {isComparisonMode && <td className="p-4 font-mono text-cyan-400/80">R {row.scenarioB.toLocaleString()}</td>}
+                      <td className="p-4 text-right font-mono font-bold text-slate-400">R {row.accA.toLocaleString()}</td>
+                      {isComparisonMode && (
+                        <td className="p-4 text-right font-mono font-bold text-red-400/80 bg-red-400/5">
+                          + R {row.delta.toLocaleString()}
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
