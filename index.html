@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, LineChart, Line, Legend, ComposedChart 
+  ResponsiveContainer, Legend, ComposedChart 
 } from 'recharts';
 import { 
-  Zap, TrendingUp, Lock, Calculator, Calendar, 
-  ArrowRightLeft, AlertCircle, Info, ChevronRight
+  Zap, TrendingUp, Lock, Calculator, 
+  ArrowRightLeft, Info, ChevronRight
 } from 'lucide-react';
 
 const App = () => {
@@ -67,7 +67,7 @@ const App = () => {
               <div className="p-2 bg-yellow-500/10 rounded-lg">
                 <Zap className="text-yellow-500 w-6 h-6" />
               </div>
-              <h1 className="text-2xl font-bold tracking-tight">Cost Projection Analysis</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-white">Cost Projection Analysis</h1>
             </div>
             <p className="text-slate-400 text-sm max-w-md">
               Forecast cumulative utility liabilities over a 10-year horizon based on imported 2025 actuals.
@@ -113,7 +113,7 @@ const App = () => {
                 <div>
                   <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">2025 Base Cost (Imported)</label>
                   <div className="flex items-center justify-between bg-[#0d1117] p-3 rounded-lg border border-slate-800">
-                    <span className="text-sm font-mono">R {initialBaseCost.toLocaleString()}</span>
+                    <span className="text-sm font-mono text-white">R {initialBaseCost.toLocaleString()}</span>
                     <Lock size={12} className="text-slate-600" />
                   </div>
                 </div>
@@ -177,7 +177,7 @@ const App = () => {
           <div className="lg:col-span-3 space-y-6">
             <div className="bg-[#151b23] border border-slate-800 p-6 rounded-2xl shadow-sm">
               <div className="flex justify-between items-center mb-8">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
+                <h3 className="text-sm font-semibold flex items-center gap-2 text-white">
                   <TrendingUp size={16} className="text-green-500" /> 
                   10-Year Annual Cost Growth
                 </h3>
@@ -225,6 +225,7 @@ const App = () => {
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#0d1117', border: '1px solid #1e293b', borderRadius: '8px' }}
                       itemStyle={{ fontSize: '12px' }}
+                      labelStyle={{ color: '#94a3b8', marginBottom: '4px', fontWeight: 'bold' }}
                     />
                     <Area 
                       type="monotone" 
