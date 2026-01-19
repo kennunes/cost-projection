@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, Legend, ComposedChart, Bar, Cell
+  ResponsiveContainer, ComposedChart
 } from 'recharts';
 import { 
   Zap, TrendingUp, Lock, Calculator, 
   ArrowRightLeft, Info, ChevronRight,
-  TrendingDown, DollarSign, Download, Share2
+  Download, Share2, Plus
 } from 'lucide-react';
 
 const App = () => {
@@ -20,33 +20,42 @@ const App = () => {
   const [isComparisonMode, setIsComparisonMode] = useState(false);
   const [startYear] = useState(2026);
 
-  // Formatting utility
+  // Formatting utility with safety fallback
   const formatCurrency = (val) => {
-    return new Intl.NumberFormat('en-ZA', {
-      style: 'currency',
-      currency: 'ZAR',
-      maximumFractionDigits: 0,
-    }).format(val);
+    if (typeof val !== 'number' || isNaN(val)) return 'R 0';
+    try {
+      return new Intl.NumberFormat('en-ZA', {
+        style: 'currency',
+        currency: 'ZAR',
+        maximumFractionDigits: 0,
+      }).format(val);
+    } catch (e) {
+      return `R ${val.toLocaleString()}`;
+    }
   };
 
-  // Calculation engine for 10-year compounding
+  // Calculation engine for 10-year compounding with safety guards
   const projectionData = useMemo(() => {
-    let data = [];
+    const data = [];
     let accumulationA = 0;
     let accumulationB = 0;
     let currentCostA = initialBaseCost;
     let currentCostB = initialBaseCost;
 
+    // Ensure we have valid numbers for calculation
+    const rateA = Number.isNaN(annualIncreaseA) ? 0 : annualIncreaseA;
+    const rateB = Number.isNaN(annualIncreaseB) ? 0 : annualIncreaseB;
+
     for (let i = 0; i < 10; i++) {
       const year = startYear + i;
       
       // Scenario A
-      const incA = currentCostA * (annualIncreaseA / 100);
+      const incA = currentCostA * (rateA / 100);
       const endA = currentCostA + incA;
       accumulationA += endA;
 
       // Scenario B
-      const incB = currentCostB * (annualIncreaseB / 100);
+      const incB = currentCostB * (rateB / 100);
       const endB = currentCostB + incB;
       accumulationB += endB;
 
@@ -58,8 +67,8 @@ const App = () => {
         accB: Math.round(accumulationB),
         annualDiff: Math.round(endB - endA),
         totalDiff: Math.round(accumulationB - accumulationA),
-        growthRateA: annualIncreaseA,
-        growthRateB: annualIncreaseB,
+        growthRateA: rateA,
+        growthRateB: rateB,
       });
 
       currentCostA = endA;
@@ -69,13 +78,15 @@ const App = () => {
   }, [annualIncreaseA, annualIncreaseB, startYear]);
 
   const stats = useMemo(() => {
-    const last = projectionData[9];
-    return {
-      totalA: last.accA,
-      totalB: last.accB,
-      variance: last.totalDiff,
-      percentageIncrease: ((last.accB / last.accA - 1) * 100).toFixed(1)
-    };
+    if (!projectionData || projectionData.length === 0) return { totalA: 0, totalB: 0, variance: 0, percentageIncrease: "0.0" };
+    
+    const last = projectionData[projectionData.length - 1];
+    const totalA = last.accA || 0;
+    const totalB = last.accB || 0;
+    const variance = last.totalDiff || 0;
+    const percentageIncrease = totalA > 0 ? ((totalB / totalA - 1) * 100).toFixed(1) : "0.0";
+
+    return { totalA, totalB, variance, percentageIncrease };
   }, [projectionData]);
 
   // Custom Tooltip for professional charting
@@ -270,7 +281,7 @@ const App = () => {
               
               <div className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={projectionData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <AreaChart data={projectionData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gradA" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#eab308" stopOpacity={0.15}/>
@@ -321,7 +332,7 @@ const App = () => {
                         animationDuration={1500}
                       />
                     )}
-                  </ComposedChart>
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
